@@ -13,6 +13,9 @@ import glob
 
 toaster = ToastNotifier()
 
+"""
+calculates the difference between 2 times
+"""
 def timeDiff(startTime, endTime):
     deltaT = endTime-startTime
     secDiff=deltaT.seconds
@@ -33,6 +36,9 @@ def timeDiff(startTime, endTime):
 
     return "{}h, {}m, {}s".format(hDiff,minDiff,secDiff)
 
+"""
+returns the current time as a string
+"""
 def currTime():
     a = datetime.now()
     arr = []
@@ -47,6 +53,9 @@ def currTime():
             arr[i]="0"+arr[i]
     return ":".join(arr)+isPm
 
+"""
+returns true if given number is a float
+"""
 def isFloat(number):
     try:
         float(number)
@@ -54,15 +63,33 @@ def isFloat(number):
     except ValueError:
         return False
 
+"""
+function to be called from other files so that 
+can be run based off command line args
+"""
 def loadFromArgs():
     args=[float(num) for num in sys.argv if isFloat(num)]
     args = [int(num) if int(num)==num else num for num in args ]
     julia(*args)#the *args expands the list
 
+
+"""
+scales an integer to between 2 other numbers
+inputs:
+    val(int): the value to be scaled
+    Tmin(int): minimum val could be
+    Tmax(int): maxumum val could be
+    Rmin(int): minimum val should be after transform
+    Rmax(int): maximum val should be after transform
+"""
 def rangeScale(val, Tmin, Tmax, Rmin, Rmax):
     res = (val-Rmin)/(Rmax-Rmin)
     return res*(Tmax-Tmin) + Tmin
 
+"""
+determines if name is already present in folder
+returns true if already taken
+"""
 def nameTaken(name):
     if name == 1:
         return True
@@ -71,16 +98,29 @@ def nameTaken(name):
         return True
     return False
 
+"""
+depreciated since was not working reliable
+made window to get attention when program finished
+"""
 def getAttention():
     from tkinter import Tk
     Tk().mainloop()
 
-def julia(c, width=100, height=50, max=15,xView=1.5, yView=1.3):
+"""
+handles output to command line and contruction of image
+inputs:
+    c(int): specifies which slice of fractal space
+    width(int): the width of the image
+    height(int): the height of the image
+    max(int): the maximum value in the image(higher=darker)
+    xView(int): x value for position of image in the slice of fractal space
+    yView(int): y value for position of image in the slice of fractal space
+"""
+def julia(c, width, height, max,xView, yView):
     arr = np.zeros((height, width, 3))
     fileName=1#so it starts
     while nameTaken(fileName):
-        #fileName = "interestingResults\\{}nuJulia{}.png".format(randint(1,99),c)
-        fileName = "{}nuJulia{}.png".format(randint(1,99),c)
+        fileName = "interestingResults\\{}nuJulia{}.png".format(randint(1,99),c)
     
     print("""STARTING\nfileSize={}x{}, c={}
     max={}, view={}x{}""".format(width, height, c, max,xView,yView))
@@ -107,13 +147,25 @@ def julia(c, width=100, height=50, max=15,xView=1.5, yView=1.3):
     #toaster.show_toast("program is done","julia {}".format(c))
 
 #START EXPERIMENTING HERE
+"""
+used for changing julia set with different functions, if you just return
+(x,y) it will just be a julia set
+"""
 def getFunky(x,y):
     #y = erf(1-erf(y))
     #y=math.gamma(abs(y)+0.01)
     #x = cos(2**sin(x))
     return (x,y)
 
-#only mess with this if you are feeling bold
+"""
+determines what the value of a pixel at a given position 
+should be
+Parameters:
+    c(int): specifies which slice of fractal space
+    x(int): x position of pixel in image
+    y(int): y position of pixel in image
+    max(int): maximum value in image, higher is darker
+"""
 def juliaPixel(c, x, y,max):
     x0,y0 = x, y#only needed when doind mandelbrot
     
@@ -148,7 +200,7 @@ def main():
     if len(sys.argv) > 1:
         loadFromArgs()
         return
-    c=.25
+    c=.4
     width=dimensions[0]
     height=dimensions[1]
     xView=1#full view is 2 2, interesting view is 1 1
