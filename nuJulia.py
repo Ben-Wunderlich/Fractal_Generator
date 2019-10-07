@@ -3,15 +3,11 @@ import numpy as np
 from imageio import imwrite
 import keyboard
 from random import randint, random
-import random
-from PIL import Image
-from win10toast import ToastNotifier    
+from PIL import Image   
 import sys#add command line args if argv > 1
 import math
-from math import sin,cos,erf
+from math import sin,cos,erf, erfc, log
 import glob
-
-toaster = ToastNotifier()
 
 """
 calculates the difference between 2 times
@@ -66,6 +62,7 @@ def isFloat(number):
 """
 function to be called from other files so that 
 can be run based off command line args
+see julia for how they will be accepted
 """
 def loadFromArgs():
     args=[float(num) for num in sys.argv if isFloat(num)]
@@ -115,27 +112,28 @@ inputs:
     max(int): the maximum value in the image(higher=darker)
     xView(int): x value for position of image in the slice of fractal space
     yView(int): y value for position of image in the slice of fractal space
+    expansion(int): factor by which each pixels value is multiplied
 """
-def julia(c, width, height, max,xView, yView):
+def julia(c, width, height, max,xView, yView, expansion):
     arr = np.zeros((height, width, 3))
     fileName=1#so it starts
     while nameTaken(fileName):
-        fileName = "interestingResults\\{}nuJulia{}.png".format(randint(1,99),c)
+        fileName = "interestingResults\\{}nuJulia{}.png".format(randint(1,999),c)
     
     print("""STARTING\nfileSize={}x{}, c={}
     max={}, view={}x{}""".format(width, height, c, max,xView,yView))
     print("operation started at", currTime())
     strtStore = datetime.now()
-    print("\ncomputing {}...".format(fileName))
+    print("\ncomputing {}...".format(fileName[19:]))
 
     for x in range(0, width):
         currX = rangeScale(x, -xView, xView, 0, width)
         for y in range(0, height):
             currY = rangeScale(y, -yView, yView, 0, height)
-            arr[y,x]=juliaPixel(c, currX, currY, max)
-        #if keyboard.is_pressed("alt+ctrl+caps lock"):
-        #    print("INTERRUPTED")
-        #    break
+            arr[y,x]=juliaPixel(c, currX, currY, max, expansion)
+        if keyboard.is_pressed("caps lock"):
+            print("INTERRUPTED")
+            break
 
     arr = arr / arr.max() #normalizing data in range 0 - 255
     arr = 255 * arr
@@ -144,17 +142,18 @@ def julia(c, width, height, max,xView, yView):
 
     print("\n...finished!\noperation ended at", currTime())
     print("it took {}".format(timeDiff(strtStore,datetime.now())))
-    #toaster.show_toast("program is done","julia {}".format(c))
 
 #START EXPERIMENTING HERE
 """
-used for changing julia set with different functions, if you just return
-(x,y) it will just be a julia set
+used for changing julia set with different functions, if you just 
+return(x,y) it will be an unmodified julia set
 """
 def getFunky(x,y):
     #y = erf(1-erf(y))
     #y=math.gamma(abs(y)+0.01)
     #x = cos(2**sin(x))
+    if y > 0:
+        y=log(y)
     return (x,y)
 
 """
@@ -166,10 +165,9 @@ Parameters:
     y(int): y position of pixel in image
     max(int): maximum value in image, higher is darker
 """
-def juliaPixel(c, x, y,max):
-    x0,y0 = x, y#only needed when doind mandelbrot
+def juliaPixel(c, x, y,max, expansion):
+    x0,y0 = x, y#only needed when doing mandelbrot
     
-    expansion=1.2
     i=0
     while i<max and x**2 + y**2 < 4:
         #JULIA
@@ -185,30 +183,31 @@ def juliaPixel(c, x, y,max):
         x*=expansion
         y*=expansion
         i+=1
-    i=cos(i)
+    #i=cos(i)
     i = int(round(rangeScale(i, 0, 255, 0, max)))
 
-    #return(i,i,i)#white on black
-    return(0,i//1.5,i)#light blue on black
-    #return(0,i,255-i)# on blue
+    return(i,i,i)#white on black
+    #return(0,i//1.5,i)#light blue on black
+    #return(0,i,255-i)# green on blue
 
 def main():
     dimensions = (400,400)
-    #dimensions=(1000,1000)
-    #dimensions = (1000, 2000)
+    dimensions=(1000,1000)
+    dimensions = (4000, 2200)
 
     if len(sys.argv) > 1:
         loadFromArgs()
         return
-    c=.4
+    c=.5
     width=dimensions[0]
     height=dimensions[1]
     xView=1#full view is 2 2, interesting view is 1 1
-    yView=1
-    max=200#smaller is brighter#45
+    yView=0.55
+    expansion=1
+    max=40#smaller is brighter#45
 #pick 2 points on a rectangle, make line between them
 
-    julia(c,width,height,max,xView,yView)
+    julia(c,width,height,max,xView,yView, expansion)
     #getAttention()
 
 if __name__ == "__main__":
