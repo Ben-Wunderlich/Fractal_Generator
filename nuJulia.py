@@ -112,9 +112,12 @@ inputs:
     max(int): the maximum value in the image(higher=darker)
     xView(int): x value for position of image in the slice of fractal space
     yView(int): y value for position of image in the slice of fractal space
-    expansion(int): factor by which each pixels value is multiplied
+    expansion(int): how far spaced each value should be from default
+    useMandel(bool): specifies whether to use mandelbrot set or julia set(true is use mandelbrot set)
+    #NOTE that if useMandel is true the c value will not be used
+
 """
-def julia(c, width, height, max,xView, yView, expansion):
+def julia(c, width, height, max,xView, yView, expansion, useMandel):
     arr = np.zeros((height, width, 3))
     fileName=1#so it starts
     while nameTaken(fileName):
@@ -130,7 +133,7 @@ def julia(c, width, height, max,xView, yView, expansion):
         currX = rangeScale(x, -xView, xView, 0, width)
         for y in range(0, height):
             currY = rangeScale(y, -yView, yView, 0, height)
-            arr[y,x]=juliaPixel(c, currX, currY, max, expansion)
+            arr[y,x]=juliaPixel(c, currX, currY, max, expansion, useMandel)
         if keyboard.is_pressed("caps lock"):
             print("INTERRUPTED")
             break
@@ -164,20 +167,25 @@ Parameters:
     x(int): x position of pixel in image
     y(int): y position of pixel in image
     max(int): maximum value in image, higher is darker
+    expansion(int): how far spaced each value should be from default
+    useMandel(bool): specifies whether to use mandelbrot set or julia set(true is use mandelbrot set)
+    #NOTE that if useMandel is true the c value will not be used
 """
-def juliaPixel(c, x, y,max, expansion):
-    x0,y0 = x, y#only needed when doing mandelbrot
+def juliaPixel(c, x, y,max, expansion, useMandel):
+    if useMandel:
+        x0,y0 = x, y#only needed when doing mandelbrot
     
     i=0
     while i<max and x**2 + y**2 < 4:
-        #JULIA
-        xtemp = x**2 - y**2  
-        y = 2*x*y + c
-        x = xtemp + c
-        #MANDELBROT
-        '''xtemp = x**2 - y**2 + x0 
-        y = 2*x*y + y0
-        x = xtemp''' 
+        if useMandel: #MANDELBROT SET
+            xtemp = x**2 - y**2 + x0 
+            y = 2*x*y + y0
+            x = xtemp
+        else:        #JULIA
+            xtemp = x**2 - y**2  
+            y = 2*x*y + c
+            x = xtemp + c
+
         
         x,y = getFunky(x,y)
         x*=expansion
@@ -192,8 +200,8 @@ def juliaPixel(c, x, y,max, expansion):
 
 def main():
     dimensions = (400,400)
-    dimensions=(1000,1000)
-    dimensions = (4000, 2200)
+    #dimensions=(1000,1000)
+    #dimensions = (4000, 2200)
 
     if len(sys.argv) > 1:
         loadFromArgs()
@@ -204,11 +212,11 @@ def main():
     xView=1#full view is 2 2, interesting view is 1 1
     yView=0.55
     expansion=1
+    useMandelbrotSet=False
     max=40#smaller is brighter#45
 #pick 2 points on a rectangle, make line between them
 
-    julia(c,width,height,max,xView,yView, expansion)
-    #getAttention()
+    julia(c,width,height,max,xView,yView, expansion, useMandelbrotSet)
 
 if __name__ == "__main__":
     main()
